@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Birthday, Aliya!</title>
+    <style>
+        :root {
+            --bg-color: #fff5f5;
+            --card-bg: #ffffff;
+            --text-color: #5c4d4d;
+            --accent-pink: #ffb7b2;
+            --soft-gold: #e2c08d;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Background soft gradient overlay */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(circle, rgba(255,235,235,1) 0%, rgba(255,245,245,1) 100%);
+            z-index: -2;
+        }
+
+        /* Main Glassmorphism Card */
+        .card {
+            background: var(--card-bg);
+            padding: 3rem 2rem;
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(255, 183, 178, 0.2);
+            text-align: center;
+            max-width: 450px;
+            width: 90%;
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            z-index: 10;
+            animation: fadeIn 1.5s ease-out;
+        }
+
+        h1 {
+            font-family: 'Georgia', serif;
+            font-size: 2.5rem;
+            color: #d4817a;
+            margin-bottom: 1rem;
+            font-weight: 400;
+        }
+
+        p.message {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+            color: #7a6666;
+        }
+
+        .heart {
+            color: var(--accent-pink);
+            font-size: 1.5rem;
+            animation: pulse 1.5s infinite;
+            display: inline-block;
+        }
+
+        /* Floating Emojis styling */
+        .emoji-pop {
+            position: absolute;
+            pointer-events: none;
+            z-index: 5;
+            font-size: 1.5rem;
+            user-select: none;
+            animation: floatUp 4s linear forwards;
+            opacity: 0;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(100vh) translateX(0) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.8;
+            }
+            90% {
+                opacity: 0.8;
+            }
+            100% {
+                transform: translateY(-10vh) translateX(var(--random-x)) rotate(var(--random-rotate));
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Background Music -->
+    <!-- Replace URL with your preferred soft background track or local file path -->
+    <audio id="bg-music" loop>
+        <source src="aliya.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+
+    <div class="card">
+        <h1>Happy Birthday,<br>Aliya Abdulsalam</h1>
+        <p class="message">
+            Wishing a truly wonderful day to someone incredibly special. May your year ahead be as beautiful, bright, and charming as you are. ✨
+        </p>
+        <div class="heart">💖</div>
+    </div>
+
+    <script>
+        // --- 1. Audio Auto-Play Logic ---
+        window.addEventListener('DOMContentLoaded', () => {
+            const music = document.getElementById('bg-music');
+            
+            // Modern browsers block autoplay without user interaction. 
+            // This 2-second delay attempts playback, with a fallback if blocked.
+            setTimeout(() => {
+                music.volume = 0; // Start quiet for a smooth fade-in
+                music.play().then(() => {
+                    // Smooth volume fade-in over 2 seconds
+                    let fade = setInterval(() => {
+                        if (music.volume < 0.3) { // Caps volume at a soft 30%
+                            music.volume += 0.05;
+                        } else {
+                            clearInterval(fade);
+                        }
+                    }, 200);
+                }).catch(error => {
+                    console.log("Autoplay blocked. Music will play upon the user's first click anywhere on the page.");
+                    // Fallback: Play on first user click if browser blocks it
+                    document.addEventListener('click', () => {
+                        music.play();
+                        music.volume = 0.3;
+                    }, { once: true });
+                });
+            }, 2000); // 2 second delay
+        });
+
+        // --- 2. Random Emoji Popups (Cakes & Sprinkles) ---
+        const emojis = ['🎂', '🧁', '🌸', '✨', '💗', '🍰', '✨', '🍬'];
+
+        function createEmoji() {
+            const emojiEl = document.createElement('div');
+            emojiEl.classList.add('emoji-pop');
+            
+            // Pick a random emoji from our soft birthday set
+            emojiEl.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+            
+            // Randomize horizontal spawn position
+            emojiEl.style.left = Math.random() * 100 + 'vw';
+            
+            // Set dynamic CSS variables for the float animation path
+            const randomX = (Math.random() * 200 - 100) + 'px';
+            const randomRotate = (Math.random() * 360) + 'deg';
+            emojiEl.style.setProperty('--random-x', randomX);
+            emojiEl.style.setProperty('--random-rotate', randomRotate);
+            
+            // Randomize sizes slightly for depth
+            emojiEl.style.fontSize = (Math.random() * 1.2 + 1) + 'rem';
+            
+            // Randomize speed slightly so they don't look uniform
+            emojiEl.style.animationDuration = (Math.random() * 3 + 3) + 's';
+
+            document.body.appendChild(emojiEl);
+
+            // Clear element after animation ends to keep DOM clean
+            setTimeout(() => {
+                emojiEl.remove();
+            }, 6000);
+        }
+
+        // Continually spawn emojis at a soft, steady interval
+        setInterval(createEmoji, 300);
+    </script>
+</body>
+</html>
