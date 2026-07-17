@@ -278,11 +278,9 @@
   </main>
 
   <script>
-    const status = document.getElementById('status');
-
     let audioStarted = false;
     let audioContext;
-
+  
     function playNote(freq, duration, time) {
       if (!audioContext) return;
       const oscillator = audioContext.createOscillator();
@@ -297,7 +295,7 @@
       oscillator.start(time);
       oscillator.stop(time + duration + 0.02);
     }
-
+  
     function startAmbientSound() {
       if (audioStarted) return;
       audioStarted = true;
@@ -312,7 +310,7 @@
       };
       audioContext.resume().then(playLoop);
     }
-
+  
     function createFloatingEmoji() {
       const emojis = ['🎂', '🧁', '🌸', '✨', '💗', '🍰', '✨', '🍬'];
       const popup = document.createElement('div');
@@ -325,86 +323,43 @@
       document.body.appendChild(popup);
       setTimeout(() => popup.remove(), 6000);
     }
-
+  
     function startGentleMagic() {
       createFloatingEmoji();
       setInterval(createFloatingEmoji, 1800);
     }
-
+  
+    // Smoothly fades in the target audio element
+    function fadeInAudio(audioElement, targetVolume = 0.7, duration = 3000) {
+      audioElement.volume = 0;
+      const intervalTime = 50; 
+      const step = targetVolume / (duration / intervalTime);
+      
+      const fadeInterval = setInterval(() => {
+        if (audioElement.volume + step < targetVolume) {
+          audioElement.volume += step;
+        } else {
+          audioElement.volume = targetVolume;
+          clearInterval(fadeInterval);
+        }
+      }, intervalTime);
+    }
+  
     window.addEventListener('load', () => {
-      // Start gentle emojis shortly after load.
       setTimeout(startGentleMagic, 600);
-
-      // Try to play the video's audio after a short delay; if blocked, fall back to the generated ambient sound.
+  
       const video = document.getElementById('aliyaVideo');
-      const img = document.getElementById('aliyaImg');
-
-      function showVideoAndPlay() {
-        try {
-          img.style.display = 'none';
-          video.style.display = 'block';
-        } catch (e) {}
-      }
-
-      function fallbackToAmbient() {
-        if (!audioStarted) startAmbientSound();
-      }
-
-      if (video) {
-        // Hide video until we confirm playback or failure.
-        video.style.display = 'none';
-
-        // If video metadata loads, prefer video playback.
-        video.addEventListener('loadeddata', () => {
-          // Attempt to play with audio.
-          video.muted = false;
-          video.volume = 0.6;
-          const p = video.play();
-          if (p && p.then) {
-            p.then(() => {
-              audioStarted = true; // prevent WebAudio fallback
-              showVideoAndPlay();
-            }).catch(() => {
-              // Autoplay blocked — fallback
-              video.style.display = 'none';
-              img.style.display = 'block';
-              fallbackToAmbient();
-            });
-          } else {
-            // Older browsers: give it a moment then check if it's playing
-            setTimeout(() => {
-              if (!video.paused && video.currentTime > 0) {
-                audioStarted = true;
-                showVideoAndPlay();
-              } else {
-                fallbackToAmbient();
-              }
-            }, 500);
-          }
-        }, { once: true });
-
-        video.addEventListener('error', () => {
-          // Video failed — show image and start ambient.
-          video.style.display = 'none';
-          img.style.display = 'block';
-          fallbackToAmbient();
-        }, { once: true });
-
-        // Conservative attempt: if the browser blocks autoplay entirely, the 'play' promise rejection above will trigger fallback.
-        // Load the video source to fire loadeddata / error.
-        video.load();
-
-        // As a safety, after 2s ensure ambient sound starts if video didn't play.
-        setTimeout(() => {
-          if (!audioStarted) fallbackToAmbient();
-        }, 2600);
-      } else {
-        // No video element — start ambient sound.
-        fallbackToAmbient();
-      }
-
-      // Try to autoplay `aliya.mp3` after a short delay; if blocked, show a small enable button.
       const audioEl = document.getElementById('aliyaAudio');
+  
+      if (video) {
+        // Video is strictly visual and muted
+        video.muted = true;
+        video.style.display = 'block'; 
+        video.play().catch(() => {
+          video.style.display = 'block';
+        });
+      }
+  
       function showEnableAudioButton() {
         let btn = document.getElementById('enableAudioBtn');
         if (!btn) {
@@ -416,33 +371,32 @@
         }
         btn.style.display = 'inline-block';
         btn.addEventListener('click', () => {
-          audioEl.play().then(() => {
-            audioStarted = true;
-            btn.style.display = 'none';
-            // mute video if present
-            const v = document.getElementById('aliyaVideo'); if (v) v.muted = true;
-          }).catch(() => {});
+          if (audioEl) {
+            audioEl.play().then(() => {
+              audioStarted = true;
+              btn.style.display = 'none';
+              fadeInAudio(audioEl, 0.7, 3000); // Fade in on interaction if autoplay was blocked
+            }).catch(() => {});
+          }
         }, { once: true });
       }
-
+  
       if (audioEl) {
-        audioEl.volume = 0.7;
+        // Start at absolute zero for the fade-in hook
+        audioEl.volume = 0;
+        
         setTimeout(() => {
-          const p = audioEl.play();
-          if (p && p.then) {
-            p.then(() => {
-              audioStarted = true;
-              // prefer mp3 audio — mute video if it exists
-              const v = document.getElementById('aliyaVideo'); if (v) v.muted = true;
-            }).catch(() => {
-              // autoplay blocked
-              showEnableAudioButton();
-              if (!audioStarted) fallbackToAmbient();
-            });
-          } else {
-            setTimeout(() => { if (!audioStarted) { showEnableAudioButton(); fallbackToAmbient(); } }, 500);
-          }
+          audioEl.play().then(() => {
+            audioStarted = true;
+            fadeInAudio(audioEl, 0.7, 3000); // Smoothly ramp up to 0.7 volume over 3 seconds
+          }).catch(() => {
+            // If the browser strictly blocks autoplay, wait for the manual button trigger
+            showEnableAudioButton();
+            if (!audioStarted) startAmbientSound();
+          });
         }, 2000);
+      } else {
+        setTimeout(() => { if (!audioStarted) startAmbientSound(); }, 2600);
       }
     });
   </script>
